@@ -1,28 +1,31 @@
-# Revolt Motors — Multi-Brand Bike Showroom
+# Revolt Motors — Multi-Brand EV Bike Showroom
 
-A full-stack bike showroom website with a public site and an admin panel to manage bike listings, colors, and photos.
+A full-stack electric-bike showroom website with a public site and an admin panel to manage
+bike listings, colors, photos, enquiries, test-ride bookings, and admin accounts.
 
-- **Frontend:** React (Vite) + Tailwind CSS + React Router
-- **Backend:** Node.js + Express + Prisma + PostgreSQL
-- **Auth:** JWT-based admin login (hardcoded credentials, env-configurable)
+- **Frontend:** React (Vite) + Tailwind CSS + React Router + Recharts
+- **Backend:** Java 21 + Spring Boot + Spring Data JPA (Hibernate) + Flyway + PostgreSQL
+- **Auth:** JWT-based admin login, real DB-backed accounts with Owner/Staff roles (bcrypt-hashed passwords)
 - **Photos:** Uploaded via the admin panel, stored in [Garage](https://garagehq.deuxfleurs.fr/)
   (self-hosted, S3-compatible object storage) running in Docker, proxied through the API so
   every image URL returned by the API is a complete, directly-viewable link
-  (`http://localhost:5001/uploads/<key>`)
+  (`http://localhost:8080/uploads/<key>`)
 
 ## Project structure
 
 ```
 showroom/
-├── client/          # React frontend (public site + admin panel)
-├── server/          # Express API + Prisma schema
-├── garage/           # Garage (S3-compatible storage) config + one-time bootstrap script
-└── docker-compose.yml  # PostgreSQL + Garage for local development
+├── client/            # React frontend (public site + admin panel)
+├── server/
+│   └── showroom/      # Spring Boot API (Java 21, Maven)
+├── garage/            # Garage (S3-compatible storage) config + one-time bootstrap script
+└── docker-compose.yml # PostgreSQL + Garage for local development
 ```
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 18+ (frontend)
+- Java 21+ and Maven (backend — the bundled `mvnw` wrapper downloads Maven itself, no separate install needed)
 - Docker (for PostgreSQL and Garage) — or your own PostgreSQL instance + S3-compatible storage
 
 ## 1. Start PostgreSQL and Garage
@@ -35,33 +38,35 @@ cp garage/garage.toml.example garage/garage.toml
 
 docker compose up -d
 ./garage/setup.sh   # one-time: creates the cluster layout, bucket, and access key
+
+# The Java backend keeps its own database, separate from anything else in the same
+# Postgres instance:
+docker exec showroom-postgres psql -U showroom -d showroom -c "CREATE DATABASE showroom_java;"
 ```
 
 `setup.sh` prints a **Key ID** and **Secret key** the first time it creates the access key —
-copy those into `server/.env` as `GARAGE_ACCESS_KEY_ID` / `GARAGE_SECRET_ACCESS_KEY`.
+copy those into `server/showroom/.env` as `GARAGE_ACCESS_KEY_ID` / `GARAGE_SECRET_ACCESS_KEY`.
 
 This starts Postgres on `localhost:5434` and Garage's S3 API on `localhost:3900` (mapped from
 their container defaults to avoid clashing with other local services — change the port mappings
-in `docker-compose.yml` if you prefer different ones, and update `DATABASE_URL` /
-`GARAGE_ENDPOINT` in `server/.env` to match).
+in `docker-compose.yml` if you prefer different ones, and update `DB_URL` / `GARAGE_ENDPOINT` in
+`server/showroom/.env` to match).
 
 ## 2. Backend setup
 
 ```bash
-cd server
-cp .env.example .env   # adjust values if needed
-npm install
-npm run prisma:migrate # creates tables
-npm run seed            # creates a sample bike
-npm run dev              # starts the API on http://localhost:5001
+cd server/showroom
+cp .env.example .env   # adjust values if needed (DB creds, JWT secret, Garage keys)
+./run.sh                # loads .env, then runs `mvnw spring-boot:run` on http://localhost:8080
 ```
 
-Admin login credentials are set via `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `server/.env`
-(defaults to `admin` / `Admin@123`):
-- Username: `admin`
-- Password: `Admin@123`
+On first run, Flyway creates the schema and a data seeder bootstraps:
+- one **owner** admin account, from `ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`
+  (defaults to `admin@varexa.in` / `Admin@123`)
+- one sample bike (Revolt RV400), if the bikes table is empty
 
-**Change these before deploying.**
+**Change the admin password before deploying**, and manage additional staff/owner accounts
+from the admin panel's **Admins** tab (owner-only) once logged in.
 
 ## 3. Frontend setup
 
@@ -76,30 +81,28 @@ Set `VITE_WHATSAPP_NUMBER` in `client/.env` to your real WhatsApp Business numbe
 (international format, no `+` or spaces, e.g. `919876543210`) — it powers the floating
 WhatsApp button and all "Enquire" links.
 
-If Vite picks a different port than 5173 (because it's already in use), update
-`CLIENT_URL` in `server/.env` to match, so CORS allows the frontend to call the API.
+If Vite picks a different port than 5173 (because it's already in use), update `CLIENT_URL`
+in `server/showroom/.env` to match, so CORS allows the frontend to call the API — though in
+development any `localhost:*` origin is already allowed regardless.
 
 ## Features
 
 **Public site**
 - Home, About Us, Services, Contact Us pages
-- Bike listing with search, brand/category filters, and sorting
-- Bike detail page with color variants, photo gallery, specs, and an enquiry form
-- Floating WhatsApp button on every page
+- EV bike listing with search, brand/category filters, and sorting
+- Bike detail page with color variants, photo gallery, EV specs (battery capacity, range,
+  charging time, top speed, power), an enquiry form, and a test-ride booking form
 
 **Admin panel** (`/admin/login`)
-- Dashboard with bike/enquiry stats
-- Add / edit / delete bikes (name, brand, category, price, specs, description)
-  - `POST /bikes` accepts either JSON, or `multipart/form-data` with an `images` field to
-    upload 2+ photos in the same request that creates the bike
-- Manage color variants per bike
-- Upload and manage bike photos (assign to a color, mark as primary) — each photo is stored
-  in Garage and deleted from Garage automatically when the photo or its bike is deleted
-- View and manage customer enquiries
-
-## API docs
-
-Interactive Swagger UI: `http://localhost:5001/api/docs` (raw spec at `/api/docs.json`).
+- Dashboard with bike/enquiry/booking stats and charts (enquiries over time, bikes by brand,
+  most-enquired bikes)
+- Bikes: search/filter by brand, category, and published/draft status; bulk feature/publish/
+  delete; duplicate a bike as a starting point for a variant; drag-to-reorder photos
+  - `POST /api/bikes` accepts `multipart/form-data` with an `images` field to upload photos in
+    the same request that creates the bike (max 5MB per photo, JPEG/PNG/WEBP/AVIF only)
+- Enquiries: status tracking (New/Contacted/Converted/Closed) and CSV export
+- Test-ride bookings: status tracking (Pending/Confirmed/Completed/Cancelled)
+- Admins tab (owner-only): add/remove staff or owner accounts, change roles
 
 ## Notes
 
@@ -108,7 +111,10 @@ Interactive Swagger UI: `http://localhost:5001/api/docs` (raw spec at `/api/docs
   and friends at a hosted S3-compatible provider, before scaling past a single server.
 - `garage/garage.toml` is gitignored (it holds generated secrets) — each environment should
   generate its own via `garage/garage.toml.example`.
-- Change `JWT_SECRET`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD` before deploying to production.
-- Admin auth is a single hardcoded username/password pair (env-configurable) — there is no
-  multi-admin support or DB-backed accounts. The unused `Admin` table in the Prisma schema
-  can be removed if you don't plan to add real accounts later.
+- `server/showroom/.env` is gitignored; Java/Spring Boot has no built-in `.env` loader, so
+  `run.sh` sources it into the shell before starting the app. If you run the app from an IDE
+  instead, set the same variables in its run configuration.
+- Change `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` before deploying to production.
+- The backend's schema is managed by Flyway (`server/showroom/src/main/resources/db/migration`)
+  with Hibernate in `validate`-only mode — add new migrations rather than letting Hibernate
+  auto-generate DDL.

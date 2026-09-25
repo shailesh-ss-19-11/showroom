@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: showroom-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: showroom
+      POSTGRES_PASSWORD: showroom
+      POSTGRES_DB: showroom
+    ports:
+      - "5434:5432"
+    volumes:
+      - showroom_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U showroom -d showroom"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  garage:
+    image: dxflrs/garage:v1.0.1
+    container_name: showroom-garage
+    restart: unless-stopped
+    environment:
+      RUST_LOG: garage=info
+    ports:
+      - "3900:3900" # S3 API
+      - "3901:3901" # RPC (cluster/CLI communication)
+      - "3903:3903" # Admin API
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - showroom_garage_meta:/var/lib/garage/meta
+      - showroom_garage_data:/var/lib/garage/data
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  showroom_pgdata:
+  showroom_garage_meta:
+  showroom_garage_data:

@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  OWNER
+  STAFF
+}
+
+model Admin {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      AdminRole @default(STAFF)
+  createdAt DateTime  @default(now())
+}
+
+model Bike {
+  id                 String      @id @default(cuid())
+  name               String
+  brand              String
+  category           String
+  price              Decimal
+  batteryCapacityKwh Float?
+  rangeKm            Float?
+  chargingTimeHours  Float?
+  topSpeedKmph       Float?
+  power              String?
+  description        String?
+  featured           Boolean     @default(false)
+  isActive           Boolean     @default(true)
+  colors             BikeColor[]
+  images             BikeImage[]
+  enquiries          Enquiry[]
+  bookings           Booking[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([brand])
+  @@index([category])
+}
+
+model BikeColor {
+  id      String      @id @default(cuid())
+  bike    Bike        @relation(fields: [bikeId], references: [id], onDelete: Cascade)
+  bikeId  String
+  name    String
+  hexCode String
+  images  BikeImage[]
+}
+
+model BikeImage {
+  id        String     @id @default(cuid())
+  bike      Bike       @relation(fields: [bikeId], references: [id], onDelete: Cascade)
+  bikeId    String
+  color     BikeColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  colorId   String?
+  url       String
+  isPrimary Boolean    @default(false)
+  sortOrder Int        @default(0)
+  createdAt DateTime   @default(now())
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
+}
+
+model Enquiry {
+  id        String        @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  message   String?
+  bike      Bike?         @relation(fields: [bikeId], references: [id], onDelete: SetNull)
+  bikeId    String?
+  source    String        @default("contact")
+  status    EnquiryStatus @default(NEW)
+  createdAt DateTime      @default(now())
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  name          String
+  phone         String
+  email         String?
+  preferredDate DateTime
+  notes         String?
+  bike          Bike?         @relation(fields: [bikeId], references: [id], onDelete: SetNull)
+  bikeId        String?
+  status        BookingStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+}

@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #e11d2e;
+  --color-brand-dark: #a80f1d;
+  --color-ink: #0f1115;
+  --color-ink-soft: #3a3f47;
+  --font-display: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-display);
+  color: var(--color-ink);
+}
+
+.input {
+  @apply w-full rounded-lg border border-black/10 px-3 py-2 text-sm;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

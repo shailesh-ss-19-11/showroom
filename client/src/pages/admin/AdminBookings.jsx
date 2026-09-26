@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api/client";
 import Loader from "../../components/ui/Loader";
 
@@ -13,6 +14,7 @@ const STATUS_STYLES = {
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -25,9 +27,17 @@ export default function AdminBookings() {
   }
 
   useEffect(load, [statusFilter]);
+  useEffect(() => {
+    api.get("/staff-directory").then((res) => setStaff(res.data));
+  }, []);
 
   async function changeStatus(id, status) {
     await api.patch(`/bookings/${id}/status`, { status });
+    load();
+  }
+
+  async function assign(id, adminId) {
+    await api.patch(`/bookings/${id}/assign`, { adminId: adminId || null });
     load();
   }
 
@@ -69,6 +79,7 @@ export default function AdminBookings() {
                 <th className="px-4 py-3">Bike</th>
                 <th className="px-4 py-3">Preferred Date</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Assigned To</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -92,7 +103,25 @@ export default function AdminBookings() {
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3">
+                    <select
+                      value={b.assignedTo?.id || ""}
+                      onChange={(e) => assign(b.id, e.target.value)}
+                      className="rounded-lg border border-black/10 px-2 py-1 text-xs"
+                    >
+                      <option value="">Unassigned</option>
+                      {staff.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <Link
+                      to={`/admin/sales?bookingId=${b.id}&bikeId=${b.bike?.id || ""}&name=${encodeURIComponent(b.name)}&phone=${encodeURIComponent(b.phone)}&email=${encodeURIComponent(b.email || "")}`}
+                      className="mr-3 text-sm font-semibold text-brand hover:underline"
+                    >
+                      Mark Sold
+                    </Link>
                     <button onClick={() => remove(b.id)} className="text-sm font-semibold text-red-600 hover:underline">
                       Delete
                     </button>

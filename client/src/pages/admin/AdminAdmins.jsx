@@ -5,9 +5,14 @@ import Loader from "../../components/ui/Loader";
 
 const emptyForm = { name: "", email: "", password: "", role: "STAFF" };
 
+function formatPrice(price) {
+  return `₹${Number(price).toLocaleString("en-IN")}`;
+}
+
 export default function AdminAdmins() {
   const { admin: me } = useAuth();
   const [admins, setAdmins] = useState([]);
+  const [performance, setPerformance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
@@ -16,6 +21,7 @@ export default function AdminAdmins() {
   function load() {
     setLoading(true);
     api.get("/admins").then((res) => setAdmins(res.data)).finally(() => setLoading(false));
+    api.get("/stats/staff").then((res) => setPerformance(res.data));
   }
 
   useEffect(load, []);
@@ -145,6 +151,39 @@ export default function AdminAdmins() {
             {saving ? "Adding..." : "Add Admin"}
           </button>
         </form>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-lg font-bold text-ink">Staff Performance</h2>
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-black/5 bg-white shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-black/5 bg-gray-50 text-xs uppercase tracking-wide text-ink-soft">
+              <tr>
+                <th className="px-4 py-3">Staff</th>
+                <th className="px-4 py-3">Enquiries Assigned</th>
+                <th className="px-4 py-3">Converted</th>
+                <th className="px-4 py-3">Bookings Assigned</th>
+                <th className="px-4 py-3">Completed</th>
+                <th className="px-4 py-3">Sales</th>
+                <th className="px-4 py-3">Revenue</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-black/5">
+              {performance.map((p) => (
+                <tr key={p.adminId}>
+                  <td className="px-4 py-3 font-semibold text-ink">{p.name}</td>
+                  <td className="px-4 py-3 text-ink-soft">{p.enquiriesAssigned}</td>
+                  <td className="px-4 py-3 text-ink-soft">{p.enquiriesConverted}</td>
+                  <td className="px-4 py-3 text-ink-soft">{p.bookingsAssigned}</td>
+                  <td className="px-4 py-3 text-ink-soft">{p.bookingsCompleted}</td>
+                  <td className="px-4 py-3 text-ink-soft">{p.salesCount}</td>
+                  <td className="px-4 py-3 font-semibold text-ink">{formatPrice(p.revenue)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {performance.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">No admins yet.</p>}
+        </div>
       </div>
     </div>
   );

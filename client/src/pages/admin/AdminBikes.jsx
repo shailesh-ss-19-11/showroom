@@ -17,6 +17,8 @@ export default function AdminBikes() {
   const [status, setStatus] = useState("");
   const [selected, setSelected] = useState(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   function load() {
     setLoading(true);
@@ -81,19 +83,78 @@ export default function AdminBikes() {
     navigate(`/admin/bikes/${data.id}`);
   }
 
+  async function handleImport(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const { data } = await api.post("/bikes/import", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setImportResult(data);
+      load();
+    } catch (err) {
+      setImportResult({ created: 0, errors: [{ row: 0, message: err.response?.data?.error || "Import failed" }] });
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  }
+
+  function downloadTemplate() {
+    const header = "name,brand,category,price,batteryCapacityKwh,rangeKm,chargingTimeHours,topSpeedKmph,power,description,featured,isActive\n";
+    const example = 'RV400,Revolt,Sport,128900,3.24,150,4.5,85,"3 kW BLDC motor","AI-enabled electric motorcycle",true,true\n';
+    const blob = new Blob([header, example], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "bikes-import-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (loading) return <Loader />;
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold text-ink">Bikes</h1>
-        <Link
-          to="/admin/bikes/new"
-          className="rounded-full bg-brand px-5 py-2 text-sm font-bold uppercase tracking-wide text-white hover:bg-brand-dark"
-        >
-          + Add Bike
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={downloadTemplate}
+            className="rounded-full border border-black/10 px-5 py-2 text-sm font-bold uppercase tracking-wide text-ink hover:bg-gray-50"
+          >
+            CSV Template
+          </button>
+          <label className="cursor-pointer rounded-full border border-black/10 px-5 py-2 text-sm font-bold uppercase tracking-wide text-ink hover:bg-gray-50">
+            {importing ? "Importing..." : "Import CSV"}
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleImport} disabled={importing} />
+          </label>
+          <Link
+            to="/admin/bikes/new"
+            className="rounded-full bg-brand px-5 py-2 text-sm font-bold uppercase tracking-wide text-white hover:bg-brand-dark"
+          >
+            + Add Bike
+          </Link>
+        </div>
       </div>
+
+      {importResult && (
+        <div className="mt-4 rounded-xl border border-black/5 bg-white p-4 text-sm shadow-sm">
+          <p className="font-semibold text-green-700">{importResult.created} bike(s) imported.</p>
+          {importResult.errors.length > 0 && (
+            <ul className="mt-2 list-disc pl-5 text-red-600">
+              {importResult.errors.map((e, i) => (
+                <li key={i}>Row {e.row}: {e.message}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap gap-3">
         <input

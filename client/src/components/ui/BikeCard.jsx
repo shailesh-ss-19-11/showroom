@@ -37,20 +37,20 @@ export default function BikeCard({ bike }) {
       to={`/bikes/${bike.id}`}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+      className="group flex flex-col overflow-hidden rounded-xl border border-black/10 bg-white transition hover:border-ink/30"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
         {displayedImage ? (
           <img
             src={resolveImage(displayedImage.url)}
             alt={bike.name}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-ink-soft">No image</div>
         )}
         {bike.featured && (
-          <span className="absolute left-3 top-3 rounded-full bg-brand px-3 py-1 text-xs font-bold text-white">
+          <span className="absolute left-3 top-3 rounded-full bg-brand px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
             Featured
           </span>
         )}
@@ -68,11 +68,13 @@ export default function BikeCard({ bike }) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 p-4">
-        <span className="text-xs font-semibold uppercase tracking-wide text-brand">{bike.brand}</span>
-        <h3 className="text-lg font-bold text-ink">{bike.name}</h3>
+      <div className="flex flex-1 flex-col gap-1 p-5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand">{bike.brand}</span>
+        <h3 className="font-display text-xl font-bold uppercase tracking-wide text-ink transition group-hover:text-brand">
+          {bike.name}
+        </h3>
         <p className="text-xs text-ink-soft">{bike.category}</p>
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3">
           <span className="text-base font-extrabold text-ink">{formatPrice(bike.price)}</span>
           {bike.colors?.length > 0 && (
             <div className="flex -space-x-1">

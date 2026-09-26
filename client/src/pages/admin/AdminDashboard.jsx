@@ -26,6 +26,10 @@ function formatDayLabel(dateStr) {
   return new Date(dateStr).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
+function formatPrice(price) {
+  return `₹${Number(price).toLocaleString("en-IN")}`;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [recentEnquiries, setRecentEnquiries] = useState([]);
@@ -61,6 +65,8 @@ export default function AdminDashboard() {
         <StatCard label="Featured" value={stats.featuredBikes} />
         <StatCard label="New Enquiries" value={stats.newEnquiries} sub={`${stats.totalEnquiries} total`} />
         <StatCard label="Pending Bookings" value={stats.pendingBookings} sub={`${stats.totalBookings} total`} />
+        <StatCard label="Total Sales" value={stats.totalSales} />
+        <StatCard label="Total Revenue" value={formatPrice(stats.totalRevenue)} />
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">

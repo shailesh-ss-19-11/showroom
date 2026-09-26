@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api/client";
 import Loader from "../../components/ui/Loader";
 
@@ -13,6 +14,7 @@ const STATUS_STYLES = {
 
 export default function AdminEnquiries() {
   const [enquiries, setEnquiries] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -26,9 +28,17 @@ export default function AdminEnquiries() {
   }
 
   useEffect(load, [statusFilter]);
+  useEffect(() => {
+    api.get("/staff-directory").then((res) => setStaff(res.data));
+  }, []);
 
   async function changeStatus(id, status) {
     await api.patch(`/enquiries/${id}/status`, { status });
+    load();
+  }
+
+  async function assign(id, adminId) {
+    await api.patch(`/enquiries/${id}/assign`, { adminId: adminId || null });
     load();
   }
 
@@ -96,6 +106,7 @@ export default function AdminEnquiries() {
                 <th className="px-4 py-3">Message</th>
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Assigned To</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -118,7 +129,25 @@ export default function AdminEnquiries() {
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3">
+                    <select
+                      value={e.assignedTo?.id || ""}
+                      onChange={(ev) => assign(e.id, ev.target.value)}
+                      className="rounded-lg border border-black/10 px-2 py-1 text-xs"
+                    >
+                      <option value="">Unassigned</option>
+                      {staff.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <Link
+                      to={`/admin/sales?enquiryId=${e.id}&bikeId=${e.bike?.id || ""}&name=${encodeURIComponent(e.name)}&phone=${encodeURIComponent(e.phone)}&email=${encodeURIComponent(e.email || "")}`}
+                      className="mr-3 text-sm font-semibold text-brand hover:underline"
+                    >
+                      Mark Sold
+                    </Link>
                     <button onClick={() => remove(e.id)} className="text-sm font-semibold text-red-600 hover:underline">
                       Delete
                     </button>

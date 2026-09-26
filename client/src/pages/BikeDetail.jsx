@@ -20,8 +20,10 @@ export default function BikeDetail() {
   const [paused, setPaused] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", message: "" });
   const [status, setStatus] = useState("idle");
-  const [bookingForm, setBookingForm] = useState({ name: "", phone: "", preferredDate: "", notes: "" });
+  const [bookingForm, setBookingForm] = useState({ name: "", phone: "", date: "", slotId: "", notes: "" });
   const [bookingStatus, setBookingStatus] = useState("idle");
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -48,6 +50,19 @@ export default function BikeDetail() {
     }, SLIDE_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [paused, displayedImages.length]);
+
+  useEffect(() => {
+    if (!bookingForm.date) {
+      setAvailableSlots([]);
+      return;
+    }
+    setSlotsLoading(true);
+    setBookingForm((f) => ({ ...f, slotId: "" }));
+    api
+      .get("/time-slots", { params: { from: bookingForm.date, to: bookingForm.date } })
+      .then((res) => setAvailableSlots(res.data))
+      .finally(() => setSlotsLoading(false));
+  }, [bookingForm.date]);
 
   if (loading) return <Loader label="Loading bike details..." />;
   if (!bike) {
@@ -91,17 +106,21 @@ export default function BikeDetail() {
 
   async function submitBooking(e) {
     e.preventDefault();
+    if (!bookingForm.slotId) return;
     setBookingStatus("sending");
     try {
       await api.post("/bookings", {
-        ...bookingForm,
+        name: bookingForm.name,
+        phone: bookingForm.phone,
+        notes: bookingForm.notes,
         bikeId: bike.id,
-        preferredDate: new Date(bookingForm.preferredDate).toISOString(),
+        slotId: bookingForm.slotId,
       });
       setBookingStatus("sent");
-      setBookingForm({ name: "", phone: "", preferredDate: "", notes: "" });
-    } catch {
-      setBookingStatus("error");
+      setBookingForm({ name: "", phone: "", date: "", slotId: "", notes: "" });
+      setAvailableSlots([]);
+    } catch (err) {
+      setBookingStatus(err.response?.data?.error || "error");
     }
   }
 
@@ -287,11 +306,43 @@ export default function BikeDetail() {
               />
               <input
                 required
-                type="datetime-local"
-                value={bookingForm.preferredDate}
-                onChange={(e) => setBookingForm({ ...bookingForm, preferredDate: e.target.value })}
+                type="date"
+                min={new Date().toISOString().slice(0, 10)}
+                value={bookingForm.date}
+                onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
                 className="rounded-lg border border-black/10 px-4 py-2 text-sm"
               />
+
+              {bookingForm.date && (
+                <div>
+                  {slotsLoading ? (
+                    <p className="text-xs text-ink-soft">Loading available times...</p>
+                  ) : availableSlots.length === 0 ? (
+                    <p className="text-xs text-ink-soft">No test ride slots available on this date — try another date.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {availableSlots.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          disabled={s.remaining === 0}
+                          onClick={() => setBookingForm({ ...bookingForm, slotId: s.id })}
+                          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                            bookingForm.slotId === s.id
+                              ? "border-brand bg-brand text-white"
+                              : s.remaining === 0
+                                ? "cursor-not-allowed border-black/10 text-ink-soft/40 line-through"
+                                : "border-black/10 text-ink-soft hover:bg-gray-50"
+                          }`}
+                        >
+                          {new Date(s.slotTime).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <textarea
                 placeholder="Preferred showroom / notes (optional)"
                 rows={2}
@@ -301,7 +352,7 @@ export default function BikeDetail() {
               />
               <button
                 type="submit"
-                disabled={bookingStatus === "sending"}
+                disabled={bookingStatus === "sending" || !bookingForm.slotId}
                 className="rounded-full bg-ink px-6 py-2 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-black disabled:opacity-50"
               >
                 {bookingStatus === "sending" ? "Booking..." : "Book Test Ride"}
@@ -309,7 +360,11 @@ export default function BikeDetail() {
               {bookingStatus === "sent" && (
                 <p className="text-sm text-green-600">Booked! We'll confirm your test ride slot shortly.</p>
               )}
-              {bookingStatus === "error" && <p className="text-sm text-red-600">Something went wrong. Please try again.</p>}
+              {bookingStatus !== "idle" && bookingStatus !== "sending" && bookingStatus !== "sent" && (
+                <p className="text-sm text-red-600">
+                  {bookingStatus === "error" ? "Something went wrong. Please try again." : bookingStatus}
+                </p>
+              )}
             </form>
           </div>
         </div>

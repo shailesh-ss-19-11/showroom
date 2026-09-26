@@ -20,6 +20,10 @@ import AdminBikeDetail from "./pages/admin/AdminBikeDetail";
 import AdminEnquiries from "./pages/admin/AdminEnquiries";
 import AdminBookings from "./pages/admin/AdminBookings";
 import AdminAdmins from "./pages/admin/AdminAdmins";
+import AdminSales from "./pages/admin/AdminSales";
+import AdminSiteContent from "./pages/admin/AdminSiteContent";
+import AdminTimeSlots from "./pages/admin/AdminTimeSlots";
+import AdminAttendance from "./pages/admin/AdminAttendance";
 import OwnerRoute from "./components/ui/OwnerRoute";
 
 export default function App() {
@@ -45,6 +49,10 @@ export default function App() {
               <Route path="bikes/:id" element={<AdminBikeEdit />} />
               <Route path="enquiries" element={<AdminEnquiries />} />
               <Route path="bookings" element={<AdminBookings />} />
+              <Route path="time-slots" element={<AdminTimeSlots />} />
+              <Route path="sales" element={<AdminSales />} />
+              <Route path="attendance" element={<AdminAttendance />} />
+              <Route path="site-content" element={<AdminSiteContent />} />
               <Route element={<OwnerRoute />}>
                 <Route path="admins" element={<AdminAdmins />} />
               </Route>

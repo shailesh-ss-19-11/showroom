@@ -6,6 +6,10 @@ const baseLinks = [
   { to: "/admin/bikes", label: "Bikes" },
   { to: "/admin/enquiries", label: "Enquiries" },
   { to: "/admin/bookings", label: "Test Rides" },
+  { to: "/admin/time-slots", label: "Test Ride Slots" },
+  { to: "/admin/sales", label: "Sales" },
+  { to: "/admin/site-content", label: "Homepage Content" },
+  { to: "/admin/attendance", label: "Attendance" },
 ];
 
 export default function AdminLayout() {

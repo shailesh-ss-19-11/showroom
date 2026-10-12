@@ -1,4 +1,5 @@
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "919999999999";
+import { SHOWROOM } from "../../config/showroom";
+const WHATSAPP_NUMBER = SHOWROOM.whatsappNumber;
 
 export default function WhatsAppButton({ message = "Hi, I'm interested in your bikes." }) {
   const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;

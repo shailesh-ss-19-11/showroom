@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 
-const SHOWROOM_NAME = import.meta.env.VITE_SHOWROOM_NAME || "Revolt Motors";
+import { SHOWROOM } from "../../config/showroom";
+
+const SHOWROOM_NAME = SHOWROOM.name;
 
 export default function Footer() {
   return (
@@ -41,10 +43,15 @@ export default function Footer() {
         <div>
           <h3 className="mb-4 font-display text-xs font-bold uppercase tracking-[0.2em] text-white/40">Visit Us</h3>
           <ul className="space-y-3 text-sm text-white/70">
-            <li>123 MG Road, Pune, Maharashtra</li>
-            <li>+91 90212 69997</li>
-            <li>info@varexa.in</li>
-            <li>Mon–Sun: 9:30 AM – 8:30 PM</li>
+            {SHOWROOM.branches.map((b) => (
+              <li key={b.name}>
+                <span className="block font-bold text-brand">📍 {b.name}</span>
+                <span className="font-medium text-white">{b.address}</span>
+              </li>
+            ))}
+            <li><a href={`tel:${SHOWROOM.phone.replace(/\s/g, "")}`} className="font-bold text-white transition hover:text-brand">📞 {SHOWROOM.phone}</a></li>
+            <li><a href={`mailto:${SHOWROOM.email}`} className="break-all font-bold text-white transition hover:text-brand">✉ {SHOWROOM.email}</a></li>
+            <li className="font-bold text-white">🕒 {SHOWROOM.hours}</li>
           </ul>
         </div>
       </div>

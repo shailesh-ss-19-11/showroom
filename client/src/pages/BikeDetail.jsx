@@ -1,3 +1,4 @@
+import { SHOWROOM } from "../config/showroom";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api, { resolveImage } from "../api/client";
@@ -7,7 +8,7 @@ function formatPrice(price) {
   return `₹${Number(price).toLocaleString("en-IN")}`;
 }
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "919999999999";
+const WHATSAPP_NUMBER = SHOWROOM.whatsappNumber;
 
 const SLIDE_INTERVAL_MS = 3500;
 

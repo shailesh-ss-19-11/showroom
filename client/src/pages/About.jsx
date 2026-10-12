@@ -1,4 +1,5 @@
-const SHOWROOM_NAME = import.meta.env.VITE_SHOWROOM_NAME || "Revolt Motors";
+import { SHOWROOM } from "../config/showroom";
+const SHOWROOM_NAME = SHOWROOM.name;
 
 const values = [
   { title: "Multi-Brand Choice", desc: "Every major two-wheeler brand under one roof, so you can compare before you decide." },

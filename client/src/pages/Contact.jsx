@@ -1,7 +1,8 @@
+import { SHOWROOM } from "../config/showroom";
 import { useState } from "react";
 import api from "../api/client";
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "919999999999";
+const WHATSAPP_NUMBER = SHOWROOM.whatsappNumber;
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", phone: "", email: "", message: "" });
@@ -77,14 +78,24 @@ export default function Contact() {
 
         <div className="flex flex-col gap-6">
           <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-ink">Showroom Address</h2>
-            <p className="mt-2 text-sm text-ink-soft">123 MG Road, Pune, Maharashtra 411001</p>
-            <p className="mt-1 text-sm text-ink-soft">Mon–Sun: 9:30 AM – 8:30 PM</p>
+            <h2 className="text-lg font-bold text-ink">Our Showrooms</h2>
+            {SHOWROOM.branches.map((b) => (
+              <div key={b.name} className="mt-3 rounded-xl border-l-4 border-brand bg-brand/5 p-3">
+                <p className="text-sm font-bold text-brand">📍 {b.name}</p>
+                <p className="text-sm font-medium text-ink">{b.address}</p>
+              </div>
+            ))}
+            <p className="mt-3 text-sm font-bold text-ink">🕒 {SHOWROOM.hours}</p>
           </div>
 
           <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold text-ink">Call or WhatsApp</h2>
-            <p className="mt-2 text-sm text-ink-soft">+91 90212 69997</p>
+            <p className="mt-2 text-base font-bold text-brand">
+              <a href={`tel:${SHOWROOM.phone.replace(/\s/g, "")}`}>{SHOWROOM.phone}</a>
+            </p>
+            <p className="mt-1 break-all text-sm font-bold text-ink">
+              <a href={`mailto:${SHOWROOM.email}`}>{SHOWROOM.email}</a>
+            </p>
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
               target="_blank"
@@ -95,14 +106,16 @@ export default function Contact() {
             </a>
           </div>
 
-          <div className="aspect-video overflow-hidden rounded-2xl border border-black/5">
-            <iframe
-              title="Showroom location"
-              className="h-full w-full"
-              loading="lazy"
-              src="https://www.google.com/maps?q=Pune,Maharashtra&output=embed"
-            />
-          </div>
+          {SHOWROOM.branches.map((b) => (
+            <div key={b.name} className="aspect-video overflow-hidden rounded-2xl border border-black/5">
+              <iframe
+                title={`${b.name} showroom location`}
+                className="h-full w-full"
+                loading="lazy"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(b.mapQuery)}&output=embed`}
+              />
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -1,10 +1,11 @@
+import { SHOWROOM } from "../config/showroom";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api, { resolveImage } from "../api/client";
 import BikeCard from "../components/ui/BikeCard";
 import Loader from "../components/ui/Loader";
 
-const SHOWROOM_NAME = import.meta.env.VITE_SHOWROOM_NAME || "Revolt Motors";
+const SHOWROOM_NAME = SHOWROOM.name;
 const GHOST_WORD = SHOWROOM_NAME.split(" ")[0].toUpperCase();
 
 const categories = [

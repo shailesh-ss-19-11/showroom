@@ -1,7 +1,8 @@
+import { SHOWROOM } from "../../config/showroom";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
-const SHOWROOM_NAME = import.meta.env.VITE_SHOWROOM_NAME || "Revolt Motors";
+const SHOWROOM_NAME = SHOWROOM.name;
 
 const links = [
   { to: "/", label: "Home", end: true },
@@ -19,8 +20,22 @@ export default function Navbar() {
       isActive ? "text-white after:w-full" : "text-white/60 hover:text-white after:w-0 hover:after:w-full"
     }`;
 
+  const telHref = `tel:${SHOWROOM.phone.replace(/\s/g, "")}`;
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-ink/95 backdrop-blur">
+      <div className="bg-brand text-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-xs font-semibold sm:px-6 lg:px-8">
+          <a href={telHref} className="flex items-center gap-2 text-sm font-bold tracking-wide hover:underline">
+            <span aria-hidden="true">📞</span>
+            {SHOWROOM.phone}
+          </a>
+          <div className="hidden items-center gap-6 sm:flex">
+            <a href={`mailto:${SHOWROOM.email}`} className="hover:underline">✉ {SHOWROOM.email}</a>
+            <span>🕒 {SHOWROOM.hours}</span>
+          </div>
+        </div>
+      </div>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <NavLink to="/" className="flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand font-display text-lg font-black leading-none text-white">
